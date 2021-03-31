@@ -9,19 +9,18 @@ flux = 100;                   %energy flux in mM/hr
 interval = 0.01;            %period of the pulse in hr
 pulse = flux * interval;  %amount of EDC added in mM 
  
-steadystate = 0;          %continuous fueling 0 = off; 1 = on.
+steadystate = ;          %continuous fueling 0 = off; 1 = on.
+seed = 0;                % seed on = 1 /off = 0;
+Fuel = 50;               % fill in 30, 40, 50, 55, 75, 100
  
- 
-Fuel = 100;                      % fill in 30, 40, 50, 55, 75, 100
- 
- 
+
 %Set time frames 
 if steadystate == 1;           
 t = 24.*hr;
 elseif  steadystate == 0 && Fuel > 55;
 t = 3*hr;
 else
-t = 0.5*hr;
+t = 1*hr;
 end
 %Set when assemblies are present 
 if Fuel > 55; 
@@ -31,9 +30,7 @@ Assembly = 0;
 end
  
  
-model = 'A'; % sets  model
- 
-[k0, k1, k2, k3, k1_2, k1_3, k1_4, k1_5, k2_2, k2_3, k2_4, k2_5, k4_2, k4_3, k4_4, k4_5, k4_6, k5_1, k5_2, k5_3, k5_4, k5_5, s4, s5, s6] = data_loader_k_values_Dynamic_Systems_Chem(model, Assembly, steadystate, flux); 
+[k0, k1, k2, k3, k1_2, k1_3, k1_4, k1_5, k2_2, k2_3, k2_4, k2_5, k4_2, k4_3, k4_4, k4_5, k4_6, k5_1, k5_2, k5_3, k5_4, k5_5, s4, s5, s6] = data_loader_k_values_Dynamic_Systems_Chem(Assembly, steadystate, flux, seed); 
 %this will load all the data.
  
 %model A: basic model 
@@ -51,24 +48,35 @@ EDC(1) = Fuel/1000;
 Precursor = 300;                  % set the concentration acid in mM
 x1COOH(1) = (Precursor/1000);  
  
-x1COOEDC(1) = 0;    %reactive monomer
-x2COOOC(1) = 0;      %dimer
-x2COOEDC(1) = 0;    %reactive dimer
+x1COOEDC(1) = 0;             %reactive monomer
+x2COOOC(1) = 0;              %dimer
+x2COOEDC(1) = 0;             %reactive dimer
  
-x3COOOC(1) = 0;      %trimer
-x3COOEDC(1) = 0;    %reactive trimer
+x3COOOC(1) = 0;              %trimer
+x3COOEDC(1) = 0;             %reactive trimer
+
+if seed == 1;
+x4COOOC(1) = 0.18/1000;      %tetramer
+x4COOEDC(1) = 0;             %reactive tetramer
+
+x5COOOC(1) = 0.14/1000;      %pentamer
+x5COOEDC(1) = 0;             %reactive pentamer
  
-x4COOOC(1) = 0;      %tetramer
-x4COOEDC(1) = 0;    %reactive tetramer
+x6COOOC(1) = 0.04/1000;      %hexamer
+x6COOEDC(1) = 0;             %reactive hexamer
+else
+    
+x4COOOC(1) = 0;              %tetramer
+x4COOEDC(1) = 0;             %reactive tetramer
+
+x5COOOC(1) = 0;              %pentamer
+x5COOEDC(1) = 0;             %reactive pentamer
  
-x5COOOC(1) = 0;      %pentamer
-x5COOEDC(1) = 0;    %reactive pentamer
- 
-x6COOOC(1) = 0;      %hexamer
-x6COOEDC(1) = 0;    %reactive hexamer
- 
-EDU(1)= 0;             %waste
-x1COO(1) = 0;            % N-Acylisourea monomer
+x6COOOC(1) = 0;              %hexamer
+x6COOEDC(1) = 0;             %reactive hexamer
+end
+EDU(1)= 0;                   %waste
+x1COO(1) = 0;                % N-Acylisourea monomer
  
 %describes all the reactions 
 for i=1:t;
@@ -331,7 +339,7 @@ for i=1:t;
 end
  
 %load all data (if available)
-[HPLCtime, HPLCEDC, HPLCdimer, HPLCtrimer, HPLCtetramer, HPLCpentamer, HPLChexamer, HPLCNacylureamonomer] = data_loader_Dynamic_Systems_Chem(Fuel,Precursor,steadystate); %this will load all the data.
+[HPLCtime, HPLCEDC, HPLCdimer, HPLCtrimer, HPLCtetramer, HPLCpentamer, HPLChexamer, HPLCNacylureamonomer] = data_loader_Dynamic_Systems_Chem(Fuel,Precursor,steadystate, seed); %this will load all the data.
 %Plots [EDC] vs time
     subplot(3,3,1)
     plot(HPLCtime,HPLCEDC,'x','color',[0.4940 0.1840 0.5560]);
@@ -453,7 +461,7 @@ end
    
 %sort out the data, selects every 60th datapoint (1min) and transposes it
 %in order to work with it.
-n = 60; 
+n = 10; 
 r1_1 = round(transpose(1000000*r1_1(1 : n : end)),3); 
 EDC = round(transpose(1000*EDC(1 : n : end)),2);
  
